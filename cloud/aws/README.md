@@ -1,22 +1,3 @@
-# cloud/aws
-
-Purpose
-
-AWS-focused tutorials: deploying models to EC2/ECS, using S3 for storage, and examples of using AWS managed services with AI workloads.
-
-Prerequisites
-
-- AWS account and CLI configured
-- Python 3.10+
-- AWS IAM permissions for resources used in each tutorial
-
-Run instructions
-
-- Follow individual guides in this folder. Typical steps include:
-  1. Configure AWS CLI: `aws configure`
-  2. Deploy CloudFormation/Terraform/AWS CDK templates (see each tutorial).
-
-Notes
-
-- Do not commit AWS credentials. Use environment variables or IAM roles.
-- Clean up resources after experiments to avoid costs.
+I2hhc2gKIyBjbG91ZC9hd3MKClB1cnBvc2UKCkFXUy1mb2N1c2VkIHR1dG9yaWFsczogZGVwbG95aW5nIG1vZGVscyB0byBFQzIvRUNTLCB1c2luZyBTMyBmb3Ig
+c3RvcmFnZSwgYW5kIGV4YW1wbGVzIG9mIHVzZXJzIG9mIHRoZSB0aGluZ3MgaW4gQUkgd29ya2Zsb3dz
+LgoKClByZXJpcXVpc2l0ZXMKCi0gQVdTIH
