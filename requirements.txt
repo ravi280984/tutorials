@@ -1,0 +1,26 @@
+# Core data + ML
+numpy
+pandas
+scikit-learn
+
+# Deep learning & transformers
+torch
+transformers
+accelerate
+
+# Vector search / RAG
+sentence-transformers
+faiss-cpu
+datasets
+
+# Web & APIs
+fastapi
+uvicorn
+python-dotenv
+pydantic
+
+# Dev / testing / formatting
+black
+isort
+pytest
+flake8

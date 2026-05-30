@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.env
+.venv/
+venv/
+*.egg-info/
+*.egg
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints
+
+# Logs
+*.log
+
+# Mac
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Data & models
+data/
+models/
+checkpoints/
+*.ckpt
+*.pth
+*.pt
+
+# Docker
+*.tgz
+
+# OS
+Thumbs.db
+
+# PyCharm
+.idea/
+
+# Terraform
+.terraform/
+
+# Secrets
+*.pem
+*.key
+
+# npm
+node_modules/
+
+# Coverage
+.coverage
+
+# Others
+*.sqlite3
