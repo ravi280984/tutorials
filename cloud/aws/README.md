@@ -2,7 +2,9 @@
 
 Purpose
 
-AWS-focused tutorials: deploying models to EC2/ECS, using S3 for storage, and examples of using AWS managed services with AI workloads.
+AWS-focused tutorials: 
+- Core AWS Services - Overview, When to use , Basic Concepts, How to Use & Key Usecases
+- Code Examples - How to leverage the services programtically
 
 Prerequisites
 
