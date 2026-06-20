@@ -1,41 +1,68 @@
-# tutorials
+# Practical AI, Cloud, and DevOps Tutorials
 
-Overview
+Learn modern platform engineering one concept at a time. This repository combines concise explanations with small, runnable examples for engineers working across AI, cloud architecture, and DevOps.
 
-This repository contains curated tutorials, examples, and starter templates for AI development, cloud integrations, and DevOps workflows. It is organized into subfolders to keep focused content and demos isolated and easy to follow.
+> The material is written for progressive learning: start with a concept, follow the related provider guide, and use a demo when you want to experiment locally.
 
-Structure
+## Start here
 
-- AI/
-  - mcp/       - Model Context Protocol examples and local agent demos
-  - rag/       - Retrieval-Augmented Generation examples and vector search demos
-- cloud/
-  - aws/       - AWS-focused tutorials and IaC examples
-  - azure/     - Azure-focused tutorials and deployments
-- devops/
-  - github/    - CI/CD examples, GitHub Actions, and release workflows
+| Learning path | What you will learn | First topic |
+| --- | --- | --- |
+| [AI](docs/ai/README.md) | LLM foundations, embeddings, RAG, tools, and agents | [How modern AI systems fit together](docs/ai/01-modern-ai-systems.md) |
+| [Cloud](docs/cloud/README.md) | Cloud fundamentals, governance, and landing zones | [Why cloud computing became popular](docs/cloud/01-cloud-computing.md) |
+| [DevOps](docs/devops/README.md) | Automation and delivery practices used by this repository | [GitHub Actions CI](docs/devops/01-github-actions-ci.md) |
 
-Setup (local)
+## Repository map
 
-1. Install Python 3.10+ and Docker (optional).
-2. Create and activate a virtual environment:
-   - powershell: python -m venv .venv; .\.venv\Scripts\Activate.ps1
-3. Install dependencies:
-   - pip install -r requirements.txt
-4. Optional: build with Docker:
-   - docker build -t tutorials:latest .
+```text
+.
+|-- docs/                 # Tutorials and learning paths
+|   |-- ai/
+|   |-- cloud/
+|   `-- devops/
+|-- demos/                # Runnable, self-contained examples
+|-- scripts/              # Repository validation and maintenance tools
+|-- assets/               # Images and other static tutorial assets
+`-- .github/workflows/    # Continuous integration
+```
 
-Usage
+### Content boundaries
 
-- Read the folder-specific README files for step-by-step instructions for each tutorial.
-- Use the `AI` folder to explore model/agent examples.
-- Use the `cloud` folder for provider-specific deployment guides.
-- Use the `devops` folder for CI/CD and infra automation samples.
+- Put explanations, diagrams, and learning material in `docs/`.
+- Put runnable applications and experiments in `demos/`. Each demo owns its README and dependencies.
+- Put repository maintenance utilities in `scripts/`.
+- Put static files in `assets/` and keep them close to a clear domain path.
 
-Contributing
+This separation prevents one global environment from becoming a dependency grab bag as the repository grows.
 
-See `CONTRIBUTING.md` for contribution guidelines.
+## Run a demo
 
-License
+Every demo is self-contained. For example, to run the semantic-search demo:
 
-This project is licensed under the MIT License - see `LICENSE` for details.
+```powershell
+cd demos/ai/semantic-search
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python semantic_search.py
+```
+
+Python 3.10 or newer is recommended. Cloud tutorials can additionally require the relevant provider account and CLI; prerequisites are documented in each guide.
+
+## Add a topic
+
+1. Choose the appropriate learning path under `docs/`.
+2. Name ordered tutorials with a two-digit prefix, such as `03-networking-basics.md`.
+3. Add the tutorial to that section's `README.md`.
+4. Place runnable code in `demos/<domain>/<demo-name>/`, not beside the article.
+5. Run `python scripts/check_links.py` before committing.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the complete content conventions and review checklist.
+
+## Repository notes
+
+- Examples favor clarity over production completeness.
+- Cloud resources can incur charges; follow provider cleanup guidance after experiments.
+- Never commit credentials, tokens, private keys, or real customer data.
+
+Licensed under the [MIT License](LICENSE). Security concerns should follow [SECURITY.md](SECURITY.md).

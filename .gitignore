@@ -52,6 +52,20 @@ node_modules/
 
 # Coverage
 .coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # Others
 *.sqlite3
+
+# Terraform state and plans
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+
+# Local environment overrides
+.env.*
+!.env.example
