@@ -12,6 +12,9 @@ Start with the provider-neutral concepts, then follow the implementation guide f
 | Provider | Guide | Focus |
 | --- | --- | --- |
 | AWS | [AWS landing zone](aws/01-aws-landing-zone.md) | Organizations, Control Tower, identity, audit, and infrastructure as code |
+| AWS | [AWS IAM Identity Center](aws/02-aws-identity-center.md) | Centralized identity, SSO, user access, and permission sets across accounts |
+| AWS | [AWS networking inside a single account](aws/03-aws-networking.md) | VPCs, subnets, routing, security controls, and public/private access patterns |
 | Azure | [Azure landing zone and CAF](azure/01-azure-landing-zone.md) | CAF methodologies, management groups, governance, networking, and platform automation |
+| Azure | [Azure networking inside a single subscription](azure/02-azure-networking) | VNets, subnets, NSGs, route tables, and application tier segmentation |
 
 Provider guides assume familiarity with the landing-zone overview. They explain architecture and do not provision billable resources unless explicitly stated.

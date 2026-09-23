@@ -3,6 +3,7 @@
 ## Learning path
 
 1. [Azure landing zone and Cloud Adoption Framework](01-azure-landing-zone.md)
+2. [Azure networking inside a single subscription](02-azure-networking)
 
 ## Prerequisites for hands-on topics
 

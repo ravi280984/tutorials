@@ -1,0 +1,565 @@
+# Azure Networking Inside a Single Subscription
+
+This guide explains how networking is typically set up in Azure when you are working inside one Azure subscription. It focuses only on a single subscription model and does not cover cross-subscription networking or centralized hub-and-spoke designs across multiple subscriptions.
+
+If you are new to Azure, the easiest way to think about it is this:
+
+- an Azure subscription is your billing and resource boundary
+- a virtual network (VNet) is the main private network inside that subscription
+- subnets divide that network into smaller sections
+- security rules and routing control what can talk to what
+
+---
+
+## 1. The big picture
+
+Inside one Azure subscription, you usually create resources such as virtual machines, app services, databases, or container workloads. These resources need to communicate with each other and sometimes with the internet.
+
+Azure networking gives you the building blocks to define:
+
+- which resources are private and which are public
+- which ports are open
+- which traffic is allowed or blocked
+- how traffic routes inside the subscription
+
+### Simple mental model
+
+```mermaid
+flowchart LR
+    Internet[Internet] --> Public[Public endpoints / Load Balancer]
+    Public --> App[App tier]
+    App --> DB[Database tier]
+    App --> VNet[VNet in subscription]
+    DB --> VNet
+```
+
+In a small Azure subscription setup, the VNet is the core private network. Inside it, you create subnets and attach security controls so app and database tiers are separated logically and securely.
+
+---
+
+## 2. What is a subscription in Azure?
+
+An Azure subscription is the container for your Azure resources. It is where you pay for services, define access control, and organize resources.
+
+For this guide, we will focus on networking within one subscription only:
+
+- one tenant / one subscription
+- one or more VNets inside it
+- resources connected within that subscription
+- no cross-subscription peering or enterprise central connectivity discussed here
+
+This is the simplest starting point for understanding Azure networking.
+
+---
+
+## 3. The main networking building blocks
+
+The common components you will see in a single subscription are:
+
+### VNet
+A VNet is a private network in Azure. It acts like a virtual network boundary where your resources live.
+
+Typical VNet examples:
+
+- `10.0.0.0/16` for a production environment
+- `10.10.0.0/16` for a development environment
+
+### Subnet
+A subnet is a smaller section inside a VNet. It helps you group resources by function.
+
+Example:
+
+- `10.0.0.0/24` -> web tier
+- `10.0.1.0/24` -> app tier
+- `10.0.2.0/24` -> database tier
+
+### NIC (Network Interface)
+A NIC is attached to a VM or compute resource and gives it an IP address inside a subnet.
+
+### Public IP
+A public IP is used when a resource must be reachable from the internet.
+
+### Network Security Group (NSG)
+This is Azure's version of a security group. It controls allowed and denied inbound/outbound traffic based on ports, protocols, and source/destination.
+
+### Route Table / UDR
+A user-defined route controls how traffic flows between subnets or toward a firewall or virtual appliance.
+
+### Azure Firewall / NVA
+A firewall or network virtual appliance may be placed in a dedicated subnet to inspect and filter traffic.
+
+### Load Balancer
+A load balancer distributes traffic across multiple virtual machines or instances.
+
+### Private Endpoint / Service Endpoint
+These help resources communicate privately without exposing them to the public internet.
+
+---
+
+## 4. Virtual Network (VNet)
+
+A VNet is the foundation of Azure networking. It is like a private cloud network inside Microsoft Azure.
+
+### What it does
+
+- holds resources in private IP space
+- lets resources communicate with each other over private network paths
+- defines the network boundary for your subscription resources
+
+### Why it matters
+
+Without a VNet, Azure resources do not have a private network boundary for their internal communication.
+
+### Example
+
+```mermaid
+flowchart TD
+    VNet[Azure VNet 10.0.0.0/16]
+    VNet --> Web[Subnet 10.0.0.0/24\nWeb Tier]
+    VNet --> App[Subnet 10.0.1.0/24\nApp Tier]
+    VNet --> DB[Subnet 10.0.2.0/24\nDatabase Tier]
+```
+
+This is a typical pattern: a single VNet that contains different workload tiers.
+
+### VNet design principles
+
+- allocate private address spaces carefully
+- keep the network small but scalable
+- avoid overlapping IP ranges with other networks
+- separate workloads using subnets
+
+---
+
+## 5. Subnets
+
+A subnet is a logical subdivision inside a VNet.
+
+Why subnets are important:
+
+- isolate application components
+- apply different security rules per tier
+- control route behavior by segment
+- organize workloads by role or environment
+
+### Example subnet layout
+
+```mermaid
+flowchart LR
+    VNet[VNet: 10.0.0.0/16] --> Web[Web subnet\n10.0.0.0/24]
+    VNet --> App[App subnet\n10.0.1.0/24]
+    VNet --> DB[Database subnet\n10.0.2.0/24]
+    VNet --> Mgmt[Management subnet\n10.0.3.0/24]
+```
+
+### Common patterns
+
+- Web subnet for public-facing workloads
+- App subnet for business logic
+- DB subnet for data services
+- Management subnet for bastion or admin access
+
+Each subnet can have its own NSG and route rules.
+
+---
+
+## 6. IP address planning
+
+Every resource in a subnet needs an IP address.
+
+Azure uses private IP space, usually RFC1918 ranges like:
+
+- `10.0.0.0/8`
+- `172.16.0.0/12`
+- `192.168.0.0/16`
+
+### Example
+
+```mermaid
+flowchart TD
+    WebSubnet[10.0.0.0/24] --> VM1[VM 10.0.0.4]
+    WebSubnet --> VM2[VM 10.0.0.5]
+    AppSubnet[10.0.1.0/24] --> App1[App VM 10.0.1.10]
+    DBSubnet[10.0.2.0/24] --> DB1[DB VM 10.0.2.20]
+```
+
+### Key considerations
+
+- do not overlap VNets or subnets in the same network boundary
+- reserve space for future growth
+- plan for load balancers, firewalls, and gateways
+- keep private ranges consistent with your design
+
+---
+
+## 7. Security groups in Azure: NSGs
+
+In AWS, the common term is security group. In Azure, the equivalent is the Network Security Group (NSG).
+
+An NSG filters network traffic to and from Azure resources. It is attached to a subnet or a NIC.
+
+### What NSGs do
+
+- allow or deny inbound traffic
+- allow or deny outbound traffic
+- filter by port, protocol, and source or destination
+- help enforce least privilege
+
+### Example
+
+```mermaid
+flowchart LR
+    Internet[Internet] -->|443| NSG[NSG on Web Subnet]
+    NSG --> Web[Web VM]
+    NSG -->|Allow 80,443| Web
+    Web --> DB[DB Subnet]
+```
+
+### Example NSG rule set
+
+- allow inbound from internet on TCP 80 and 443 to web subnet
+- allow only from web subnet to app subnet on TCP 8080
+- deny all other inbound traffic by default
+- allow outbound to required destinations only
+
+### Important note
+
+NSGs are not the same as firewall appliances. They are simple, rule-based traffic filters that help secure subnet or NIC boundaries.
+
+---
+
+## 8. Routing in Azure
+
+Azure networking also has routing rules. These decide which next hop traffic uses.
+
+### Route Table (UDR)
+A route table defines where traffic should go.
+
+Example:
+
+- subnet A route traffic to a firewall for inspection
+- subnet B route to the internet directly
+
+### Why this matters
+
+Routing helps you control:
+
+- traffic path from app to database
+- internet egress
+- traffic inspection via a firewall
+- special network appliances
+
+```mermaid
+flowchart LR
+    Web[Web Subnet] --> RT[Route Table]
+    RT --> FW[Azure Firewall / NVA]
+    FW --> App[App Subnet]
+    FW --> Internet[Internet]
+```
+
+This is useful when you want to inspect or centrally control traffic instead of allowing direct access everywhere.
+
+---
+
+## 9. Public vs private access
+
+One of the biggest Azure networking decisions is whether a resource should be public or private.
+
+### Public access
+
+Use this when a resource must be reachable from the internet.
+
+Examples:
+
+- public load balancer
+- public IP on a VM
+- public endpoint for a web application
+
+### Private access
+
+Use this when a resource should only be reached within the VNet, or from approved private services.
+
+Examples:
+
+- database inside a private subnet
+- app servers only reachable internally
+- private endpoints to Azure PaaS services
+
+### Typical design
+
+```mermaid
+flowchart TB
+    User[Internet User] --> LB[Public Load Balancer]
+    LB --> Web[Web VMs in public subnet]
+    Web --> App[App VMs in private subnet]
+    App --> DB[Database in private subnet]
+```
+
+This is a common pattern: public front-end, private application and data tiers.
+
+---
+
+## 10. Common Azure networking topologies inside one subscription
+
+Below are the main system patterns you will likely see in a single-subscription environment.
+
+### Topology 1: Single VNet, multiple subnets
+
+This is the simplest design for a small or medium application.
+
+```mermaid
+flowchart TD
+    Internet --> LB[Public Load Balancer]
+    LB --> Web[Web Subnet]
+    Web --> App[App Subnet]
+    App --> DB[DB Subnet]
+```
+
+Use this when:
+
+- you have a single application
+- resources are in one subscription
+- the environment is not too large or complex
+
+---
+
+### Topology 2: Three-tier app pattern
+
+This is a very common Azure design.
+
+```mermaid
+flowchart LR
+    User[Users] --> Web[Web Tier\nPublic Subnet]
+    Web --> App[Application Tier\nPrivate Subnet]
+    App --> DB[Database Tier\nPrivate Subnet]
+    App --> Cache[Redis / Cache Tier]
+```
+
+Security pattern:
+
+- web tier accepts traffic from internet
+- app tier is private
+- database tier is private
+- only required ports are allowed
+
+---
+
+### Topology 3: Isolated management and DMZ style
+
+This pattern keeps administrative functions separate.
+
+```mermaid
+flowchart TD
+    Internet --> DMZ[DMZ / Public Subnet]
+    DMZ --> Bastion[Bastion or Jump Host]
+    Bastion --> App[App Subnet]
+    Bastion --> DB[DB Subnet]
+    App --> DB
+```
+
+This is useful when:
+
+- you want a controlled management layer
+- you need a jump host or bastion to administer private resources
+- you want to reduce direct internet exposure
+
+---
+
+### Topology 4: Firewall-based filtering model
+
+This pattern adds a centralized security checkpoint.
+
+```mermaid
+flowchart LR
+    Internet --> FW[Azure Firewall]
+    FW --> Web[Web Subnet]
+    FW --> App[App Subnet]
+    FW --> DB[DB Subnet]
+```
+
+This pattern is good when:
+
+- you want centralized traffic inspection
+- you need consistent filtering rules
+- you want to separate east-west and north-south traffic control
+
+---
+
+## 11. Key networking controls to know
+
+### Network Security Group (NSG)
+Used for port-based filtering.
+
+### Azure Firewall
+Used for advanced filtering, rules, inspection, and central security control.
+
+### Route Table
+Used for traffic steering and custom routing.
+
+### Public IP
+Used for internet-facing services.
+
+### Load Balancer
+Used to distribute requests across multiple servers.
+
+### Private Endpoint
+Used to access Azure PaaS services privately without public exposure.
+
+### Application Security Group (ASG)
+This lets you group VMs by application role, then apply security rules based on that grouping instead of only IP-based rules.
+
+---
+
+## 12. Key considerations for secure Azure networking
+
+### 1. Use least privilege
+Allow only the ports and protocols that are actually required.
+
+### 2. Separate tiers
+Web, app, and database workloads should not all live in the same subnet or same trust zone.
+
+### 3. Use private networking where possible
+Keep internal workloads away from public endpoints unless required.
+
+### 4. Control north-south traffic carefully
+Public access should be restricted to only what is needed.
+
+### 5. Centralize inspection when the environment grows
+As workloads expand, a firewall or central routing pattern becomes important.
+
+### 6. Avoid IP overlap
+Ensure no duplicate address ranges inside the design.
+
+### 7. Consider future scaling
+Build with room for additional VNets, subnets, and load balancing.
+
+### 8. Design for observability
+Track flows, firewall logs, and NSG logs to understand what is happening.
+
+---
+
+## 13. Example Azure subscription network setup
+
+Here is a practical example of a small company app hosted in a single Azure subscription.
+
+```mermaid
+flowchart TB
+    Users[Users / Internet] --> LB[Azure Load Balancer\nPublic IP]
+    LB --> WebVM1[Web VM 1]
+    LB --> WebVM2[Web VM 2]
+
+    WebVM1 --> AppVM1[App VM 1]
+    WebVM2 --> AppVM2[App VM 2]
+
+    AppVM1 --> DB[SQL Database / Private Access]
+    AppVM2 --> DB
+
+    WebVM1 -. NSG .-> WebSubnet[Web Subnet]
+    AppVM1 -. NSG .-> AppSubnet[App Subnet]
+    DB -. Private .-> DBSubnet[DB Subnet]
+```
+
+### Interpretation
+
+- Web VMs are in a public-facing subnet
+- App VMs are in a private subnet
+- Database is only reachable privately
+- NSG rules restrict port access
+- traffic flows only through allowed paths
+
+---
+
+## 14. Similarities between AWS and Azure networking
+
+The concepts are very similar, even though terminology differs.
+
+### Similarities
+
+- both have a private network boundary
+- both use subnets for segmentation
+- both use security rules to filter traffic
+- both support public and private endpoints
+- both support load balancing and firewalling
+- both rely on routing and network segmentation for security
+
+### Concept mapping
+
+- AWS VPC ≈ Azure VNet
+- AWS Subnet ≈ Azure Subnet
+- AWS Security Group ≈ Azure NSG
+- AWS Route Table ≈ Azure Route Table
+- AWS NACL ≈ Azure NSG / UDR combination at network layer
+- AWS ELB / ALB ≈ Azure Load Balancer
+
+---
+
+## 15. Differences between AWS and Azure networking
+
+### 1. Terminology
+
+In AWS, users commonly say VPC, Security Group, and NACL. In Azure, the terms are VNet, NSG, and Azure Firewall / UDR structure.
+
+### 2. Security model style
+
+AWS often uses security groups attached to EC2 instances and NACLs at subnet boundaries.
+Azure commonly uses NSGs at subnet or NIC level, with route tables and firewall appliances for additional control.
+
+### 3. Default design philosophy
+
+- AWS: network isolation and service-centric patterns are common
+- Azure: VNet + subnet + NSG + firewall + load balancing is commonly used for tiered workloads
+
+### 4. Azure is often more resource-centric around VNet design
+
+Azure networking is often described in terms of subnets, private endpoints, and route control inside a VNet, while AWS often emphasizes VPC and security group behavior in a more service-driven pattern.
+
+### 5. Public/private modeling
+
+Both cloud platforms support public and private patterns, but Azure often highlights private endpoint design and VNet-integrated services very strongly.
+
+---
+
+## 16. Best practices for Azure networking inside a subscription
+
+### Keep the network simple first
+Start with one VNet and a few subnets for the first environment.
+
+### Use NSGs to enforce least privilege
+Only allow required traffic between tiers.
+
+### Use separate subnets by role
+Do not put all resources in one subnet if they have different security needs.
+
+### Put data services in private subnets
+Reduce public exposure for databases and internal services.
+
+### Prefer private access where possible
+Use private endpoints or internal-only paths when public access is not required.
+
+### Design for monitoring
+Capture NSG flow logs and firewall logs to understand traffic patterns.
+
+### Plan for scaling early
+A small but modular design helps when more environments or services are added.
+
+---
+
+## 17. Summary
+
+Within a single Azure subscription, networking is built around a VNet, subnets, IP planning, security rules, and routing controls.
+
+The most important idea is this:
+
+- VNet gives you the private network
+- Subnets divide that network by purpose
+- NSGs control traffic
+- route tables and firewalls steer and filter traffic
+- public IPs and load balancers expose services to users only when needed
+
+This pattern helps you design a secure, scalable, and easy-to-manage Azure network without needing to think about cross-subscription networking at the start.
+
+---
+
+## 18. Final takeaway
+
+If you are learning Azure networking, start by understanding one subscription first. Learn how a VNet holds subnets, how traffic is controlled using NSGs and routes, and how resources are separated into public and private tiers. Once that foundation is clear, advanced patterns like peering, hub-spoke, private endpoints, and cross-subscription connectivity become much easier to understand.
